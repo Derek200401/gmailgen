@@ -71,29 +71,48 @@ def index():
         if request.form.get("action") == "randomize":
             form = build_random_form()
             add_log("Generated a randomized account payload for the form.")
-        else:
-            form = {key: (request.form.get(key) or "").strip() for key in build_default_form()}
-            add_log(f"User submitted account form for {form.get('first_name', '')} {form.get('last_name', '')}.")
+            return render_template(
+                "index.html",
+                form=form,
+                result=result,
+                logs=app.config["LOGS"],
+                title="Hydra Gmail Generator",
+            )
 
-            if not all(form.values()):
-                result = {"status": "error", "message": "Please complete all fields before starting the generator."}
-                add_log("Validation failed: required fields were left blank.")
+        form = {key: (request.form.get(key) or "").strip() for key in build_default_form()}
+        add_log(f"User submitted account form for {form.get('first_name', '')} {form.get('last_name', '')}.")
+
+        if not all(form.values()):
+            result = {"status": "error", "message": "Please complete all fields before starting the generator."}
+            add_log("Validation failed: required fields were left blank.")
+        else:
+            payload = build_account_payload(
+                first_name=form["first_name"],
+                last_name=form["last_name"],
+                username=form["username"],
+                birthday=form["birthday"],
+                gender=form["gender"],
+                password=form["password"],
+            )
+            add_log(f"Starting Gmail automation for {payload['gmail']}.")
+            automation_result = run_gmail_creation(payload, headless=True)
+            if automation_result.get("status") == "success":
+                result = automation_result
+                add_log(f"Automation completed successfully for {result['gmail']}.")
             else:
-                payload = build_account_payload(
-                    first_name=form["first_name"],
-                    last_name=form["last_name"],
-                    username=form["username"],
-                    birthday=form["birthday"],
-                    gender=form["gender"],
-                    password=form["password"],
-                )
-                add_log(f"Starting Gmail automation for {payload['gmail']}.")
-                result = run_gmail_creation(payload, headless=True)
-                if result.get("status") == "success":
-                    add_log(f"Automation completed successfully for {result['gmail']}.")
-                else:
-                    add_log(f"Automation failed: {result.get('message', 'Unknown error')}")
                 result = {
                     "status": "error",
-                    "message": result.get("message", "The Gmail automation could not start because Chrome/ChromeDriver is missing in this environment.")
+                    "message": automation_result.get(
+                        "message",
+                        "The Gmail automation could not start because Chrome/ChromeDriver is missing in this environment.",
+                    ),
                 }
+                add_log(f"Automation failed: {result.get('message', 'Unknown error')}")
+
+    return render_template(
+        "index.html",
+        form=form,
+        result=result,
+        logs=app.config["LOGS"],
+        title="Hydra Gmail Generator",
+    )
