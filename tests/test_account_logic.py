@@ -1,6 +1,6 @@
 import unittest
 
-from gmail_automation import build_account_payload, normalize_name, random_birthday
+from gmail_automation import build_account_payload, gender_option_value, normalize_name, random_birthday
 
 
 class AccountPayloadTests(unittest.TestCase):
@@ -31,6 +31,13 @@ class AccountPayloadTests(unittest.TestCase):
         self.assertEqual(len(parts), 3)
         self.assertTrue(parts[0].isdigit())
         self.assertTrue(parts[1].isdigit())
+
+    def test_gender_option_values_are_language_independent(self):
+        self.assertEqual(gender_option_value("female"), "1")
+        self.assertEqual(gender_option_value("male"), "2")
+        self.assertEqual(gender_option_value("other"), "3")
+        self.assertEqual(gender_option_value("custom"), "4")
+        self.assertEqual(gender_option_value("unknown"), "3")
         self.assertTrue(parts[2].isdigit())
 
 

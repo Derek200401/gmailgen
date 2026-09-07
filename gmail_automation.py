@@ -90,6 +90,17 @@ def random_birthday(min_age: int = 18, max_age: int = 70) -> str:
     return f"{birth_date.day} {birth_date.month} {birth_date.year}"
 
 
+def gender_option_value(gender: str) -> str:
+    """Return Google's language-independent value for a gender option."""
+    values = {
+        "female": "1",
+        "male": "2",
+        "other": "3",
+        "custom": "4",
+    }
+    return values.get(str(gender).lower(), "3")
+
+
 def detect_browser_paths():
     """Return the best browser and driver paths from the environment or PATH."""
     browser_candidates = [
@@ -175,19 +186,13 @@ def fill_birthday_and_gender(driver, wait, birthday: str, gender: str) -> None:
     driver.find_element(By.ID, "year").clear()
     driver.find_element(By.ID, "year").send_keys(your_year)
 
-    gender_map = {
-        "male": "Masculino",
-        "female": "Femenino",
-        "other": "Prefiero no decirlo",
-        "custom": "Personalizado",
-    }
-    gender_visible_text = gender_map.get(str(gender).lower(), "Prefiero no decirlo")
+    gender_value = gender_option_value(gender)
 
     gender_div = wait.until(EC.element_to_be_clickable((By.ID, "gender")))
     gender_div.click()
 
     gender_option = wait.until(EC.element_to_be_clickable((
-        By.XPATH, f"//li[@role='option' and .//span[text()='{gender_visible_text}']]"
+        By.XPATH, f"//li[@role='option' and @data-value='{gender_value}']"
     )))
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", gender_option)
     gender_option.click()
