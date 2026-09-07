@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 from selenium import webdriver
-from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException
+from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -242,11 +242,19 @@ def fill_gmailaddress(driver, wait, username: str) -> None:
     username_field.clear()
     username_field.send_keys(username)
     driver.find_element(By.CLASS_NAME, "VfPpkd-LgbsSe").click()
-    logger.info("Gmail address step completed.")
+    logger.info("Gmail address submitted; waiting for Google to open the password step.")
 
 
 def fill_password(driver, wait, password: str) -> None:
-    password_field = wait.until(EC.visibility_of_element_located((By.NAME, "Passwd")))
+    password_wait = WebDriverWait(driver, 45)
+    try:
+        password_field = password_wait.until(EC.visibility_of_element_located((By.NAME, "Passwd")))
+    except TimeoutException as exc:
+        raise RuntimeError(
+            "Google did not open the password step after the username was submitted. "
+            "The username may be unavailable, or Google may have inserted a verification step."
+        ) from exc
+
     password_field.clear()
     password_field.send_keys(password)
 
