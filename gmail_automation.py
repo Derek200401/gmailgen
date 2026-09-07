@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 from selenium import webdriver
-from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -289,9 +289,16 @@ def run_gmail_creation(account: dict, headless: bool = True):
                     break
                 time.sleep(2)
         else:
-            skip_buttons = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "button span.VfPpkd-vQzf8d")))
-            for button in skip_buttons:
-                button.click()
+            for _ in range(3):
+                buttons = driver.find_elements(By.CSS_SELECTOR, "button span.VfPpkd-vQzf8d")
+                visible_button = next((button for button in buttons if button.is_displayed()), None)
+                if visible_button is None:
+                    break
+                try:
+                    click_control(driver, visible_button)
+                except StaleElementReferenceException:
+                    continue
+                time.sleep(1)
 
         try:
             agree_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "button span.VfPpkd-vQzf8d")))
