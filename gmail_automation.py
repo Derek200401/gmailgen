@@ -10,6 +10,7 @@ import argparse
 import logging
 import os
 import random
+import shutil
 import time
 from datetime import datetime, timedelta
 
@@ -89,6 +90,31 @@ def random_birthday(min_age: int = 18, max_age: int = 70) -> str:
     return f"{birth_date.day} {birth_date.month} {birth_date.year}"
 
 
+def detect_browser_paths():
+    """Return the best browser and driver paths from the environment or PATH."""
+    browser_candidates = [
+        os.environ.get("GOOGLE_CHROME_BIN"),
+        os.environ.get("CHROME_BIN"),
+        os.environ.get("CHROME_PATH"),
+        shutil.which("google-chrome"),
+        shutil.which("google-chrome-stable"),
+        shutil.which("chromium"),
+        shutil.which("chromium-browser"),
+        shutil.which("chrome"),
+    ]
+    browser_binary = next((value for value in browser_candidates if value and os.path.exists(value)), None)
+
+    driver_candidates = [
+        os.environ.get("CHROMEDRIVER_PATH"),
+        shutil.which("chromedriver"),
+        "chromedriver.exe",
+        "/usr/bin/chromedriver",
+        "/usr/local/bin/chromedriver",
+    ]
+    driver_path = next((value for value in driver_candidates if value and (os.path.exists(value) or shutil.which(value))), None)
+    return browser_binary, driver_path
+
+
 def create_driver(headless: bool = True):
     """Create a Chrome webdriver instance with common stability flags."""
     chrome_options = webdriver.ChromeOptions()
@@ -102,12 +128,20 @@ def create_driver(headless: bool = True):
     if headless:
         chrome_options.add_argument("--headless=new")
 
-    driver_path = os.environ.get("CHROMEDRIVER_PATH") or "chromedriver.exe"
-    if os.path.exists(driver_path):
+    browser_binary, driver_path = detect_browser_paths()
+    if browser_binary:
+        chrome_options.binary_location = browser_binary
+
+    if driver_path:
         service = webdriver.ChromeService(executable_path=driver_path)
         return webdriver.Chrome(service=service, options=chrome_options)
 
-    return webdriver.Chrome(options=chrome_options)
+    try:
+        return webdriver.Chrome(options=chrome_options)
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            "Chrome or ChromeDriver is not installed in this runtime. On Railway, install Chromium + chromedriver or set CHROME_BIN and CHROMEDRIVER_PATH."
+        ) from exc
 
 
 def fill_name(driver, wait, first_name: str, last_name: str) -> None:
@@ -241,9 +275,15 @@ def run_gmail_creation(account: dict, headless: bool = True):
         }
     except Exception as exc:  # pragma: no cover - Selenium browser actions are environment-specific
         logger.exception("Gmail creation failed")
+        if isinstance(exc, FileNotFoundError):
+            return {
+                "status": "error",
+                "message": "Chrome/ChromeDriver is not installed in this environment. Deploy with Chromium and chromedriver enabled, or run locally on a machine with a Chrome browser installed.",
+            }
         return {"status": "error", "message": str(exc)}
     finally:
-        driver.quit()
+        if 'driver' in locals():
+            driver.quit()
 
 
 def parse_args():

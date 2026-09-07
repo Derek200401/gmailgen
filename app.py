@@ -93,9 +93,7 @@ def index():
                     add_log(f"Automation completed successfully for {result['gmail']}.")
                 else:
                     add_log(f"Automation failed: {result.get('message', 'Unknown error')}")
-
-    return render_template("index.html", form=form, result=result, logs=app.config["LOGS"], title="Hydra Gmail Generator")
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), debug=False)
+                result = {
+                    "status": "error",
+                    "message": result.get("message", "The Gmail automation could not start because Chrome/ChromeDriver is missing in this environment.")
+                }
