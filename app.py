@@ -38,10 +38,10 @@ def build_default_form() -> dict:
     return {
         "first_name": "John",
         "last_name": "Smith",
-        "username": "john.smith",
+        "username": "wanito.modz00001",
         "birthday": "12 5 1990",
         "gender": "male",
-        "password": "TestPass!123",
+        "password": "WanitoXModDek200401",
     }
 
 

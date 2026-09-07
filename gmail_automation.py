@@ -23,6 +23,8 @@ from unidecode import unidecode
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PASSWORD = "WanitoXModDek200401"
+
 
 def click_control(driver, element) -> None:
     """Click a Google form control, falling back when its overlay intercepts the click."""
@@ -45,14 +47,14 @@ def build_account_payload(
     username: str = "",
     birthday: str = "",
     gender: str = "male",
-    password: str = "P@ssWoRd910.",
+    password: str = DEFAULT_PASSWORD,
 ) -> dict:
     """Create a dictionary of values the form can use."""
     first_name_value = (first_name or "John").strip() or "John"
     last_name_value = (last_name or "Smith").strip() or "Smith"
-    safe_username = (username or "").strip() or f"{normalize_name(first_name_value)}.{normalize_name(last_name_value)}"
+    safe_username = (username or "").strip() or generate_wanito_username()
     birth_date = birthday.strip() or random_birthday()
-    password_value = password.strip() or "P@ssWoRd910."
+    password_value = password.strip() or DEFAULT_PASSWORD
 
     return {
         "first_name": first_name_value,
@@ -78,15 +80,20 @@ def generate_random_account() -> dict:
 
     first_name = random.choice(first_names)
     last_name = random.choice(last_names)
-    username = f"{normalize_name(first_name)}.{normalize_name(last_name)}{random.randint(100, 9999)}"
+    username = generate_wanito_username()
     return build_account_payload(
         first_name=first_name,
         last_name=last_name,
         username=username,
         birthday=random_birthday(),
         gender=random.choice(["male", "female", "other"]),
-        password="P@ssWoRd910.",
+        password=DEFAULT_PASSWORD,
     )
+
+
+def generate_wanito_username() -> str:
+    """Return a username in the wanito.modz00001 to wanito.modz10000 range."""
+    return f"wanito.modz{random.randint(1, 10000):05d}"
 
 
 def random_birthday(min_age: int = 18, max_age: int = 70) -> str:
@@ -340,7 +347,7 @@ def parse_args():
     parser.add_argument("--username", default="")
     parser.add_argument("--birthday", default="")
     parser.add_argument("--gender", default="female")
-    parser.add_argument("--password", default="P@ssWoRd910.")
+    parser.add_argument("--password", default=DEFAULT_PASSWORD)
     return parser.parse_args()
 
 

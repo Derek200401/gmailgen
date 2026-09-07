@@ -1,6 +1,12 @@
 import unittest
 
-from gmail_automation import build_account_payload, gender_option_value, normalize_name, random_birthday
+from gmail_automation import (
+    build_account_payload,
+    gender_option_value,
+    generate_wanito_username,
+    normalize_name,
+    random_birthday,
+)
 
 
 class AccountPayloadTests(unittest.TestCase):
@@ -38,6 +44,14 @@ class AccountPayloadTests(unittest.TestCase):
         self.assertEqual(gender_option_value("other"), "3")
         self.assertEqual(gender_option_value("custom"), "4")
         self.assertEqual(gender_option_value("unknown"), "3")
+
+    def test_wanito_username_uses_five_digit_range(self):
+        username = generate_wanito_username()
+        prefix, number = username.rsplit("modz", 1)
+        self.assertEqual(prefix, "wanito.")
+        self.assertEqual(len(number), 5)
+        self.assertGreaterEqual(int(number), 1)
+        self.assertLessEqual(int(number), 10000)
         self.assertTrue(parts[2].isdigit())
 
 
