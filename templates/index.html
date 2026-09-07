@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hydra Gmail Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <div class="watermark">WANITO © 2026</div>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Account Automation Studio</p>
+          <h1>Hydra Gmail Generator</h1>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel">
+          <h2>Account Details</h2>
+          <form method="post" class="account-form">
+            <div class="field-row">
+              <label>
+                First name
+                <input type="text" name="first_name" value="{{ form.first_name }}" required />
+              </label>
+              <label>
+                Last name
+                <input type="text" name="last_name" value="{{ form.last_name }}" required />
+              </label>
+            </div>
+
+            <div class="field-row">
+              <label>
+                Username
+                <input type="text" name="username" value="{{ form.username }}" required />
+              </label>
+              <label>
+                Birthday
+                <input type="text" name="birthday" value="{{ form.birthday }}" placeholder="DD MM YYYY" required />
+              </label>
+            </div>
+
+            <div class="field-row">
+              <label>
+                Gender
+                <select name="gender" required>
+                  <option value="male" {% if form.gender == 'male' %}selected{% endif %}>Male</option>
+                  <option value="female" {% if form.gender == 'female' %}selected{% endif %}>Female</option>
+                  <option value="other" {% if form.gender == 'other' %}selected{% endif %}>Other</option>
+                </select>
+              </label>
+              <label>
+                Password
+                <input type="text" name="password" value="{{ form.password }}" required />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button type="submit">Generate Account</button>
+              <button type="submit" name="action" value="randomize" class="secondary-button">Randomize</button>
+            </div>
+          </form>
+
+          {% if result %}
+            <div class="result-box {% if result.status == 'success' %}success{% else %}error{% endif %}">
+              {% if result.status == 'success' %}
+                <h3>Account Ready</h3>
+                <p><strong>Email:</strong> {{ result.gmail }}</p>
+                <p><strong>Password:</strong> {{ result.password }}</p>
+              {% else %}
+                <h3>Generation Failed</h3>
+                <p>{{ result.message }}</p>
+              {% endif %}
+            </div>
+          {% endif %}
+        </section>
+
+        <aside class="panel logs-panel">
+          <h2>Windows Logs</h2>
+          <div class="log-box">
+            {% for log in logs %}
+              <div class="log-entry">{{ log }}</div>
+            {% else %}
+              <div class="log-entry">No logs yet.</div>
+            {% endfor %}
+          </div>
+        </aside>
+      </main>
+
+      <footer class="footer">
+        <span>© 2026 Wanito. All rights reserved.</span>
+      </footer>
+    </div>
+  </body>
+</html>
