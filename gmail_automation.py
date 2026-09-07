@@ -15,12 +15,22 @@ import time
 from datetime import datetime, timedelta
 
 from selenium import webdriver
+from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from unidecode import unidecode
 
 logger = logging.getLogger(__name__)
+
+
+def click_control(driver, element) -> None:
+    """Click a Google form control, falling back when its overlay intercepts the click."""
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    try:
+        element.click()
+    except ElementClickInterceptedException:
+        driver.execute_script("arguments[0].click();", element)
 
 
 def normalize_name(value: str) -> str:
@@ -110,18 +120,18 @@ def select_gender(driver, wait, gender: str) -> None:
         Select(gender_control).select_by_value(gender_value)
         return
 
-    gender_control.click()
+    click_control(driver, gender_control)
     options = wait.until(EC.presence_of_all_elements_located((By.XPATH, "//*[@role='option']")))
     visible_options = [option for option in options if option.is_displayed()]
 
     for option in visible_options:
         if option.get_attribute("data-value") == gender_value or option.get_attribute("value") == gender_value:
-            option.click()
+            click_control(driver, option)
             return
 
     option_index = int(gender_value) - 1
     if option_index < len(visible_options):
-        visible_options[option_index].click()
+        click_control(driver, visible_options[option_index])
         return
 
     raise RuntimeError("Google's gender options were not available after opening the dropdown.")
@@ -200,12 +210,12 @@ def fill_birthday_and_gender(driver, wait, birthday: str, gender: str) -> None:
     your_day, your_month, your_year = birthday.split()
 
     month_div = wait.until(EC.element_to_be_clickable((By.ID, "month")))
-    month_div.click()
+    click_control(driver, month_div)
 
     month_option = wait.until(EC.element_to_be_clickable((
         By.XPATH, f"//li[@role='option' and @data-value='{int(your_month)}']"
     )))
-    month_option.click()
+    click_control(driver, month_option)
 
     driver.find_element(By.ID, "day").clear()
     driver.find_element(By.ID, "day").send_keys(your_day)
